@@ -11,16 +11,30 @@ import UIKit
 class ViewController: UIViewController {
 
 	@IBOutlet weak var celularStrenghtLabel: UILabel!
-	override func viewDidLoad() {
-		super.viewDidLoad()
-	}
+	
+	private var timer: Timer!
 	
 	override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
-		let sinalValue = getSignalStrength()
-		celularStrenghtLabel.text = String(sinalValue)
+		initTimer()
+	}
+	
+	override func viewWillDisappear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+		timer.invalidate()
 	}
 
+	private func initTimer() {
+		timer = Timer.scheduledTimer(timeInterval: 2.0, target: self, selector: #selector(updateSignalMeasure), userInfo: nil, repeats: true)
+		timer.fire()
+	}
+	
+	@objc func updateSignalMeasure() {
+		let sinalValue = getSignalStrength()
+		celularStrenghtLabel.text = String(sinalValue)
+		print("timer updated")
+	}
+	
 }
 
 extension ViewController {
@@ -34,20 +48,24 @@ extension ViewController {
 			return 0
 		}
 		
+		guard let barSignalStrenghtStringClass = NSClassFromString("UIStatusBarSignalStrengthItemView") else {
+			return 0
+		}
+
 		let foregroundViewSubviews = foregroundView.subviews
 		
 		var dataNetworkItemView:UIView!
 		
+		var signalValue = 0
+		
 		for subview in foregroundViewSubviews {
-			if subview.isKind(of: NSClassFromString("UIStatusBarSignalStrengthItemView")!) {
+			if subview.isKind(of: barSignalStrenghtStringClass) {
 				dataNetworkItemView = subview
-				break
-			} else {
-				return 0 //NO SERVICE
+				signalValue = dataNetworkItemView.value(forKey: "signalStrengthRaw") as! Int
 			}
 		}
 		
-		return dataNetworkItemView.value(forKey: "signalStrengthBars") as! Int
+		return signalValue
 		
 	}
 }
